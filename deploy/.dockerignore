@@ -1,0 +1,18 @@
+# Raíz del contexto de build = repo (parent de deploy/)
+.git
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.venv
+**/venv
+**/dist
+**/.env
+**/*.db
+**/uploads
+**/.DS_Store
+frontend/node_modules
+backend/.venv
+backend/*.db
+backend/uploads
+deploy/.env
+*.md

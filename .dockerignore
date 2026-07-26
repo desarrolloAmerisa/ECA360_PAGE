@@ -1,0 +1,16 @@
+# Prefer root .dockerignore when build context is repo root
+.git
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.venv
+**/venv
+**/dist
+**/.env
+**/*.db
+backend/uploads
+frontend/dist
+frontend/node_modules
+backend/.venv
+*.md
+.DS_Store
