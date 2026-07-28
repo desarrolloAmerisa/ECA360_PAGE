@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = {
   color_surface: '#F5F5F5',
   seo_title: 'ECA360 Eventos — Historias que se viven',
   seo_description: 'Blog de eventos ECA360: bodas, XV años, graduaciones y eventos corporativos.',
+  public_site_url: 'https://eca360.com.mx',
 }
 
 const SiteSettingsContext = createContext({

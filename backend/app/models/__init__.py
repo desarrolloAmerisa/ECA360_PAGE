@@ -105,6 +105,7 @@ class SiteConfig(Base):
     seo_description: Mapped[str] = mapped_column(
         Text, default="Blog de eventos ECA360: bodas, XV años, graduaciones y eventos corporativos."
     )
+    public_site_url: Mapped[str] = mapped_column(String(255), default="https://eca360.com.mx")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )

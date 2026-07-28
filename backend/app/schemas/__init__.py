@@ -174,6 +174,7 @@ class SiteSettings(BaseModel):
     color_surface: str = "#F5F5F5"
     seo_title: str = "ECA360 Eventos — Historias que se viven"
     seo_description: str = "Blog de eventos ECA360: bodas, XV años, graduaciones y eventos corporativos."
+    public_site_url: str = "https://eca360.com.mx"
 
 
 class SiteSettingsUpdate(BaseModel):
@@ -190,3 +191,4 @@ class SiteSettingsUpdate(BaseModel):
     color_surface: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    public_site_url: Optional[str] = None

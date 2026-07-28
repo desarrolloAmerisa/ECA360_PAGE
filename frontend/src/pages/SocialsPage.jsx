@@ -122,9 +122,19 @@ export default function SocialsPage() {
   const { settings } = useSiteSettings()
   const [copied, setCopied] = useState(false)
   const shareUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '/redes'
-    return `${window.location.origin}/redes`
-  }, [])
+    let base = (settings.public_site_url || 'https://eca360.com.mx').trim().replace(/\/+$/, '')
+    if (!/^https?:\/\//i.test(base)) base = `https://${base}`
+    return `${base}/redes`
+  }, [settings.public_site_url])
+
+  const shareLabel = useMemo(() => {
+    try {
+      const u = new URL(shareUrl)
+      return `${u.host}${u.pathname}`.replace(/\/$/, '') || shareUrl
+    } catch {
+      return shareUrl.replace(/^https?:\/\//i, '')
+    }
+  }, [shareUrl])
 
   useSeo({
     title: `Redes — ${settings.site_name || 'ECA360'}`,
@@ -191,7 +201,7 @@ export default function SocialsPage() {
                 fgColor="#0A0A0A"
               />
             </motion.div>
-            <p className="max-w-[220px] break-all text-center text-[11px] text-white/40">{shareUrl}</p>
+            <p className="max-w-[220px] break-all text-center text-[11px] text-white/40">{shareLabel}</p>
             <MorphButton
               idleLabel="Copiar link de esta tarjeta"
               activeLabel="¡Copiado!"

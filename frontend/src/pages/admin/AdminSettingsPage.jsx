@@ -224,6 +224,17 @@ export default function AdminSettingsPage() {
       <section className="mt-4 border border-line bg-white p-5 sm:p-6">
         <h2 className="text-sm font-semibold">SEO del sitio</h2>
         <div className="mt-4 space-y-4">
+          <Field
+            label="URL pública del sitio"
+            hint="Se usa en el QR y al copiar el link de /redes (ej. https://eca360.com.mx)"
+          >
+            <input
+              className={inputClass}
+              value={form.public_site_url || ''}
+              onChange={(e) => set('public_site_url', e.target.value)}
+              placeholder="https://eca360.com.mx"
+            />
+          </Field>
           <Field label="Título SEO (home)">
             <input className={inputClass} value={form.seo_title} onChange={(e) => set('seo_title', e.target.value)} />
           </Field>
