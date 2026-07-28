@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
+import { MessageCircleHeart, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { commentsApi } from '../../services/api'
 import { formatDate } from '../../lib/utils'
+import { SparkleButton } from '../amicro/MicroInteractions'
 
 export default function CommentsSection({ eventId }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm()
 
   const load = async () => {
     try {
@@ -30,67 +37,108 @@ export default function CommentsSection({ eventId }) {
       const { data } = await commentsApi.create({ ...values, event_id: eventId })
       setComments((prev) => [data, ...prev])
       reset()
-      toast.success('Comentario publicado')
+      toast.success('¡Gracias por compartir!')
     } catch {
       toast.error('Error al publicar comentario')
     }
   }
 
   return (
-    <section className="border-t border-line pt-12">
-      <h2 className="font-display text-3xl font-semibold">Comentarios</h2>
-      <p className="mt-2 text-sm text-muted">Sin registro. Comparte tu mensaje.</p>
+    <section className="relative overflow-hidden border-t border-line pt-14">
+      <div className="pointer-events-none absolute -right-20 top-0 h-56 w-56 rounded-full bg-brand/[0.07] blur-3xl" />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 grid gap-4">
-        <div>
-          <input
-            {...register('name', { required: 'Nombre requerido', maxLength: 120 })}
-            placeholder="Tu nombre"
-            className="w-full border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand"
-          />
-          {errors.name && <p className="mt-1 text-xs text-brand">{errors.name.message}</p>}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.45 }}
+        className="relative"
+      >
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center bg-brand text-white">
+            <MessageCircleHeart size={22} />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Tu voz cuenta</p>
+            <h2 className="mt-1 font-display text-3xl font-semibold sm:text-4xl">Comparte tu experiencia</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-base">
+              Cuéntanos qué se sintió vivir este momento. No necesitas cuenta: solo tu nombre y lo que quieras
+              dejar en el recuerdo.
+            </p>
+          </div>
         </div>
-        <div>
-          <textarea
-            {...register('content', { required: 'Escribe un comentario', maxLength: 2000 })}
-            rows={4}
-            placeholder="Tu comentario..."
-            className="w-full resize-y border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand"
-          />
-          {errors.content && <p className="mt-1 text-xs text-brand">{errors.content.message}</p>}
-        </div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="justify-self-start bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60"
-        >
-          {isSubmitting ? 'Enviando...' : 'Publicar comentario'}
-        </button>
-      </form>
+      </motion.div>
 
-      <div className="mt-10 space-y-6">
+      <div className="relative mt-8 border border-line bg-gradient-to-br from-white via-white to-surface/80 p-5 sm:p-7">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-muted">¿Cómo te llamas?</label>
+            <input
+              {...register('name', { required: 'Cuéntanos tu nombre', maxLength: 120 })}
+              placeholder="Tu nombre"
+              className="w-full border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand"
+            />
+            {errors.name && <p className="mt-1 text-xs text-brand">{errors.name.message}</p>}
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-muted">Tu experiencia</label>
+            <textarea
+              {...register('content', { required: 'Escribe un poco de lo que viviste', maxLength: 2000 })}
+              rows={4}
+              placeholder="Escribe tu experiencia..."
+              className="w-full resize-y border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand"
+            />
+            {errors.content && <p className="mt-1 text-xs text-brand">{errors.content.message}</p>}
+          </div>
+          <div className="justify-self-start">
+            <SparkleButton type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Publicando...' : 'Publicar experiencia'}
+            </SparkleButton>
+          </div>
+        </form>
+      </div>
+
+      <div className="mt-10 space-y-4">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+          <Sparkles size={14} className="text-brand" />
+          {loading ? 'Cargando...' : `${comments.length} experiencia${comments.length === 1 ? '' : 's'}`}
+        </div>
+
         {loading && (
           <div className="space-y-3">
-            <div className="skeleton h-16" />
-            <div className="skeleton h-16" />
+            <div className="skeleton h-24" />
+            <div className="skeleton h-24" />
           </div>
         )}
+
         {!loading && comments.length === 0 && (
-          <p className="text-sm text-muted">Sé el primero en comentar.</p>
+          <div className="border border-dashed border-line bg-surface/50 px-5 py-8 text-center">
+            <p className="font-display text-xl text-ink">Sé el primero en dejar huella</p>
+            <p className="mt-1 text-sm text-muted">Tu mensaje puede inspirar a quienes vean este evento.</p>
+          </div>
         )}
+
         {comments.map((c, i) => (
           <motion.article
             key={c.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04 }}
-            className="border-b border-line pb-6"
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: Math.min(i * 0.04, 0.24) }}
+            className="border border-line bg-white p-5 transition hover:border-brand/25"
           >
-            <div className="flex items-baseline justify-between gap-4">
-              <h4 className="font-semibold text-ink">{c.name}</h4>
-              <time className="text-xs text-muted">{formatDate(c.created_at)}</time>
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-brand/10 font-display text-lg font-semibold text-brand">
+                {(c.name || '?').charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h4 className="font-semibold text-ink">{c.name}</h4>
+                  <time className="text-xs text-muted">{formatDate(c.created_at)}</time>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink/80">{c.content}</p>
+              </div>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink/80">{c.content}</p>
           </motion.article>
         ))}
       </div>

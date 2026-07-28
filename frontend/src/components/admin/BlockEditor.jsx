@@ -467,11 +467,13 @@ function BlockSettings({ block, onChange }) {
 
     case 'carousel':
       return (
-        <Field label="Elementos del carrusel">
+        <Field label="Elementos del carrusel (Cover Flow 3D)">
           <div className="space-y-2">
             {(c.items || []).map((item, i) => (
               <div key={i} className="flex items-center gap-2 border border-line p-2">
-                <span className="truncate text-xs">{item.type}: {item.url}</span>
+                <span className="truncate text-xs">
+                  {item.type}: {item.url}
+                </span>
                 <button
                   type="button"
                   className="ml-auto text-brand"

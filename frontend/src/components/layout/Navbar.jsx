@@ -1,8 +1,9 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrandMark } from '../../context/SiteSettingsContext'
+import { FocusBlurLinks } from '../amicro/MicroInteractions'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -14,18 +15,13 @@ export default function Navbar() {
           <BrandMark />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `text-sm font-medium transition ${isActive ? 'text-brand' : 'text-muted hover:text-ink'}`
-            }
-          >
-            Eventos
-          </NavLink>
-          <a href="/#buscar" className="text-sm font-medium text-muted transition hover:text-ink">
-            Buscar
-          </a>
+        <nav className="hidden md:block">
+          <FocusBlurLinks
+            items={[
+              { id: 'home', label: 'Novedades | Eventos', to: '/' },
+              { id: 'redes', label: 'Redes', to: '/redes' },
+            ]}
+          />
         </nav>
 
         <button
@@ -46,13 +42,20 @@ export default function Navbar() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden border-t border-line md:hidden"
           >
-            <div className="flex flex-col gap-2 px-4 py-4">
+            <div className="flex flex-col gap-1 px-4 py-4">
               <Link
                 to="/"
-                className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-surface"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-surface"
                 onClick={() => setOpen(false)}
               >
-                Eventos
+                Novedades | Eventos
+              </Link>
+              <Link
+                to="/redes"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-surface"
+                onClick={() => setOpen(false)}
+              >
+                Redes
               </Link>
             </div>
           </motion.div>

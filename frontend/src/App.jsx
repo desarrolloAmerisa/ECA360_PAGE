@@ -4,6 +4,7 @@ import { SiteSettingsProvider, useSiteSettings } from './context/SiteSettingsCon
 import PublicLayout from './components/layout/PublicLayout'
 import HomePage from './pages/HomePage'
 import EventPage from './pages/EventPage'
+import SocialsPage from './pages/SocialsPage'
 import NotFoundPage from './pages/NotFoundPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import RequireAuth from './components/admin/RequireAuth'
@@ -36,6 +37,7 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route index element={<HomePage />} />
             <Route path="evento/:slug" element={<EventPage />} />
+            <Route path="redes" element={<SocialsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 

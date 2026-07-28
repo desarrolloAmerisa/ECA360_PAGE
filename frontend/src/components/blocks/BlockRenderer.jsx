@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
+import Video from 'yet-another-react-lightbox/plugins/video'
 import 'yet-another-react-lightbox/styles.css'
 import { mediaUrl } from '../../services/api'
 import { youtubeId } from '../../lib/utils'
-import MediaCarousel from '../media/MediaCarousel'
+import { AnimatedMedia } from '../amicro/MicroInteractions'
+import { CoverFlowCarousel } from '../amicro/CardLayouts'
 
 function alignClass(align) {
   if (align === 'center') return 'text-center mx-auto'
@@ -27,18 +30,38 @@ function Block({ block }) {
   switch (type) {
     case 'hero':
       return (
-        <section className={`relative -mx-4 overflow-hidden sm:-mx-6 ${settings.height === 'large' ? 'min-h-[70vh]' : 'min-h-[48vh]'}`}>
+        <section
+          className={`relative -mx-4 overflow-hidden sm:-mx-6 ${settings.height === 'large' ? 'min-h-[70vh]' : 'min-h-[48vh]'}`}
+        >
           {content.image ? (
-            <img src={mediaUrl(content.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <motion.img
+              src={mediaUrl(content.image)}
+              alt=""
+              initial={{ scale: 1.08 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink to-brand-dark" />
           )}
           {content.overlay !== false && <div className="absolute inset-0 bg-black/45" />}
-          <div className={`relative z-10 flex h-full min-h-[inherit] items-center px-6 py-20 ${settings.align === 'left' ? 'justify-start' : 'justify-center text-center'}`}>
-            <div className="max-w-3xl text-white">
-              <h1 className="font-display text-5xl font-semibold leading-tight sm:text-6xl md:text-7xl">{content.title}</h1>
-              {content.subtitle && <p className="mt-4 text-lg text-white/80 sm:text-xl">{content.subtitle}</p>}
-            </div>
+          <div
+            className={`relative z-10 flex h-full min-h-[inherit] items-center px-6 py-20 ${settings.align === 'left' ? 'justify-start' : 'justify-center text-center'}`}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="max-w-3xl text-white"
+            >
+              <h1 className="font-display text-5xl font-semibold leading-tight sm:text-6xl md:text-7xl">
+                {content.title}
+              </h1>
+              {content.subtitle && (
+                <p className="mt-4 text-lg text-white/80 sm:text-xl">{content.subtitle}</p>
+              )}
+            </motion.div>
           </div>
         </section>
       )
@@ -46,18 +69,24 @@ function Block({ block }) {
     case 'title': {
       const sizes = { sm: 'text-2xl', md: 'text-3xl', lg: 'text-4xl', xl: 'text-5xl' }
       return (
-        <h2 className={`font-display font-semibold text-ink ${sizes[settings.size] || sizes.xl} ${alignClass(settings.align)}`}>
+        <h2
+          className={`font-display font-semibold text-ink ${sizes[settings.size] || sizes.xl} ${alignClass(settings.align)}`}
+        >
           {content.text}
         </h2>
       )
     }
 
     case 'subtitle':
-      return <h3 className={`text-xl text-muted sm:text-2xl ${alignClass(settings.align)}`}>{content.text}</h3>
+      return (
+        <h3 className={`text-xl text-muted sm:text-2xl ${alignClass(settings.align)}`}>{content.text}</h3>
+      )
 
     case 'paragraph':
       return (
-        <p className={`max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-ink/80 sm:text-lg ${alignClass(settings.align)}`}>
+        <p
+          className={`max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-ink/80 sm:text-lg ${alignClass(settings.align)}`}
+        >
           {content.text}
         </p>
       )
@@ -78,7 +107,9 @@ function Block({ block }) {
             playsInline
             className="w-full bg-black"
           />
-          {content.caption && <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>}
+          {content.caption && (
+            <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>
+          )}
         </figure>
       )
 
@@ -97,22 +128,15 @@ function Block({ block }) {
               loading="lazy"
             />
           </div>
-          {content.caption && <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>}
+          {content.caption && (
+            <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>
+          )}
         </figure>
       )
     }
 
     case 'carousel':
-      return (
-        <MediaCarousel
-          items={(content.items || []).map((item) => ({
-            type: item.type || 'image',
-            src: item.url || item.src,
-            poster: item.poster,
-            alt: item.alt,
-          }))}
-        />
-      )
+      return <CarouselBlock content={content} />
 
     case 'two_columns':
       return (
@@ -142,7 +166,9 @@ function Block({ block }) {
       return (
         <blockquote className={`max-w-2xl border-l-4 border-brand pl-6 ${alignClass(settings.align)}`}>
           <p className="font-display text-2xl italic leading-snug text-ink sm:text-3xl">“{content.text}”</p>
-          {content.author && <cite className="mt-3 block text-sm not-italic text-muted">— {content.author}</cite>}
+          {content.author && (
+            <cite className="mt-3 block text-sm not-italic text-muted">— {content.author}</cite>
+          )}
         </blockquote>
       )
 
@@ -177,7 +203,9 @@ function Block({ block }) {
     case 'list': {
       const Tag = content.ordered ? 'ol' : 'ul'
       return (
-        <Tag className={`max-w-2xl space-y-2 ${content.ordered ? 'list-decimal' : 'list-disc'} pl-5 text-ink/80`}>
+        <Tag
+          className={`max-w-2xl space-y-2 ${content.ordered ? 'list-decimal' : 'list-disc'} pl-5 text-ink/80`}
+        >
           {(content.items || []).map((item, i) => (
             <li key={i}>{item}</li>
           ))}
@@ -196,16 +224,73 @@ function Block({ block }) {
   }
 }
 
+function CarouselBlock({ content }) {
+  const [open, setOpen] = useState(false)
+  const [index, setIndex] = useState(0)
+  const items = (content.items || []).filter((item) => item.url || item.src)
+
+  if (!items.length) {
+    return (
+      <p className="border border-dashed border-line px-4 py-8 text-center text-sm text-muted">
+        Agrega fotos o videos al carrusel desde el editor.
+      </p>
+    )
+  }
+
+  const slides = items.map((item) => {
+    if (item.type === 'video') {
+      return {
+        type: 'video',
+        width: 1280,
+        height: 720,
+        sources: [{ src: mediaUrl(item.url || item.src), type: 'video/mp4' }],
+        poster: item.poster ? mediaUrl(item.poster) : undefined,
+      }
+    }
+    return { src: mediaUrl(item.url || item.src) }
+  })
+
+  return (
+    <>
+      <CoverFlowCarousel
+        images={items.map((item) => ({
+          url: item.url || item.src,
+          src: item.url || item.src,
+          title: item.alt || item.caption || (item.type === 'video' ? 'Video' : 'Foto'),
+          type: item.type || 'image',
+          poster: item.poster,
+        }))}
+        onSelect={(i) => {
+          setIndex(i)
+          setOpen(true)
+        }}
+        className="py-2"
+      />
+      <Lightbox
+        open={open}
+        close={() => setOpen(false)}
+        index={index}
+        slides={slides}
+        plugins={[Video]}
+      />
+    </>
+  )
+}
+
 function ImageBlock({ content, settings }) {
   const [open, setOpen] = useState(false)
   if (!content.url) return null
   return (
     <>
       <figure className={settings.width === 'narrow' ? 'mx-auto max-w-xl' : ''}>
-        <button type="button" onClick={() => setOpen(true)} className="block w-full">
-          <img src={mediaUrl(content.url)} alt={content.alt || ''} loading="lazy" className="w-full" />
+        <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
+          <AnimatedMedia>
+            <img src={mediaUrl(content.url)} alt={content.alt || ''} loading="lazy" className="w-full" />
+          </AnimatedMedia>
         </button>
-        {content.caption && <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>}
+        {content.caption && (
+          <figcaption className="mt-2 text-center text-sm text-muted">{content.caption}</figcaption>
+        )}
       </figure>
       <Lightbox open={open} close={() => setOpen(false)} slides={[{ src: mediaUrl(content.url) }]} />
     </>
@@ -220,6 +305,11 @@ function GalleryBlock({ content }) {
 
   if (!images.length) return null
 
+  const openAt = (i) => {
+    setIndex(i)
+    setOpen(true)
+  }
+
   return (
     <>
       <div
@@ -231,12 +321,16 @@ function GalleryBlock({ content }) {
             key={i}
             type="button"
             className="aspect-square overflow-hidden bg-surface"
-            onClick={() => {
-              setIndex(i)
-              setOpen(true)
-            }}
+            onClick={() => openAt(i)}
           >
-            <img src={mediaUrl(img.url)} alt={img.alt || ''} loading="lazy" className="h-full w-full object-cover transition hover:scale-105" />
+            <AnimatedMedia delay={(i % 6) * 0.05} variant={i} className="h-full">
+              <img
+                src={mediaUrl(img.url)}
+                alt={img.alt || ''}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            </AnimatedMedia>
           </button>
         ))}
       </div>

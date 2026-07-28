@@ -5,29 +5,43 @@ import { formatDate } from '../../lib/utils'
 import { mediaUrl } from '../../services/api'
 
 export default function EventCard({ event, index = 0 }) {
+  const entrances = [
+    { opacity: 0, y: 28 },
+    { opacity: 0, scale: 0.94, rotate: -1.5 },
+    { opacity: 0, x: -20 },
+  ]
+  const initial = entrances[index % entrances.length]
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={initial}
+      whileInView={{ opacity: 1, y: 0, x: 0, scale: 1, rotate: 0 }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.45, delay: (index % 6) * 0.05 }}
+      transition={{ duration: 0.55, delay: (index % 6) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6 }}
       className="group"
     >
       <Link to={`/evento/${event.slug}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-surface">
+        <div className="relative aspect-[4/3] overflow-hidden bg-surface shadow-sm transition group-hover:shadow-lg">
           {event.cover_image ? (
-            <img
+            <motion.img
               src={mediaUrl(event.cover_image)}
               alt={event.title}
               loading="lazy"
-              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+              className="h-full w-full object-cover"
+              whileHover={{ scale: 1.07 }}
+              transition={{ duration: 0.7 }}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-surface to-line">
               <span className="font-display text-4xl text-muted/40">ECA360</span>
             </div>
           )}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+          <motion.div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+          />
         </div>
         <div className="pt-4">
           {event.template && (

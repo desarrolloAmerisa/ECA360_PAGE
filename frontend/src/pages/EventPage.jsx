@@ -3,9 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { Calendar, MapPin, ArrowLeft } from 'lucide-react'
 import { eventsApi, mediaUrl } from '../services/api'
 import { useSeo } from '../hooks/useSeo'
-import { collectMediaFromBlocks, formatDate } from '../lib/utils'
+import { formatDate } from '../lib/utils'
 import BlockRenderer from '../components/blocks/BlockRenderer'
-import MediaCarousel from '../components/media/MediaCarousel'
 import CommentsSection from '../components/comments/CommentsSection'
 import EventCard from '../components/events/EventCard'
 
@@ -64,7 +63,6 @@ export default function EventPage() {
     )
   }
 
-  const mediaItems = collectMediaFromBlocks(event.blocks)
   const hasHero = event.blocks?.some((b) => b.type === 'hero')
 
   return (
@@ -112,13 +110,6 @@ export default function EventPage() {
 
       <div className={`mx-auto max-w-4xl px-4 sm:px-6 ${hasHero ? '' : 'mt-12'}`}>
         <BlockRenderer blocks={event.blocks || []} />
-
-        {mediaItems.length > 1 && (
-          <section className="mt-16">
-            <h2 className="mb-6 font-display text-3xl font-semibold">Galería multimedia</h2>
-            <MediaCarousel items={mediaItems} />
-          </section>
-        )}
 
         <div className="mt-16">
           <CommentsSection eventId={event.id} />
