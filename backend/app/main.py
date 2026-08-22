@@ -18,22 +18,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-if settings.cors_allow_all:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Dev-friendly CORS: * or lista explícita + localhost en cualquier puerto
+_cors_origins = settings.cors_origin_list
+_allow_all = settings.cors_allow_all
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if _allow_all else _cors_origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+" if not _allow_all else None,
+    allow_credentials=not _allow_all,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create tables (Alembic also available for migrations)
 Base.metadata.create_all(bind=engine)
