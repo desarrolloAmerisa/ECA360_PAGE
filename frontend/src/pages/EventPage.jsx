@@ -36,6 +36,21 @@ export default function EventPage() {
     }
   }, [slug])
 
+  // Si hay carrusel con recepción por URL, refresca items cada 8s
+  const hasIngestCarousel = Boolean(
+    event?.blocks?.some((b) => b.type === 'carousel' && b.settings?.ingest_code),
+  )
+  useEffect(() => {
+    if (!hasIngestCarousel) return undefined
+    const id = setInterval(() => {
+      eventsApi
+        .getBySlug(slug)
+        .then(({ data }) => setEvent(data))
+        .catch(() => {})
+    }, 8000)
+    return () => clearInterval(id)
+  }, [slug, hasIngestCarousel])
+
   useSeo({
     title: event ? `${event.seo_title || event.title} | ECA360` : 'Evento | ECA360',
     description: event?.seo_description || event?.excerpt,

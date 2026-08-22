@@ -7,7 +7,7 @@ from sqlalchemy import inspect, text
 
 from app.config import get_settings
 from app.database import Base, engine
-from app.routers import admin, comments, events
+from app.routers import admin, comments, events, ingest
 from app.utils.media import ensure_upload_dirs
 
 settings = get_settings()
@@ -71,6 +71,7 @@ app.mount("/uploads", StaticFiles(directory=str(upload_path)), name="uploads")
 app.include_router(events.router)
 app.include_router(comments.router)
 app.include_router(admin.router)
+app.include_router(ingest.router)
 
 
 @app.get("/health")

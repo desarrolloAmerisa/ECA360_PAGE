@@ -28,6 +28,7 @@ import {
 import toast from 'react-hot-toast'
 import { BLOCK_TYPES, createBlock } from '../../lib/utils'
 import { mediaUrl, uploadApi } from '../../services/api'
+import { useSiteSettings } from '../../context/SiteSettingsContext'
 import BlockRenderer from '../blocks/BlockRenderer'
 import clsx from 'clsx'
 
@@ -299,10 +300,27 @@ function UploadButton({ onUploaded, accept = 'image/*,video/*', label = 'Subir a
 }
 
 function BlockSettings({ block, onChange }) {
+  const { settings: siteSettings } = useSiteSettings()
   const c = block.content || {}
   const s = block.settings || {}
   const setContent = (patch) => onChange({ content: patch })
   const setSettings = (patch) => onChange({ settings: patch })
+
+  const ingestCode = (s.ingest_code || '').trim().toLowerCase()
+  const publicBase = (siteSettings.public_site_url || (typeof window !== 'undefined' ? window.location.origin : ''))
+    .trim()
+    .replace(/\/+$/, '')
+  const ingestUrl = ingestCode ? `${publicBase}/ingest/${ingestCode}` : ''
+
+  const copyIngestUrl = async () => {
+    if (!ingestUrl) return
+    try {
+      await navigator.clipboard.writeText(ingestUrl)
+      toast.success('URL copiada')
+    } catch {
+      toast.error('No se pudo copiar')
+    }
+  }
 
   switch (block.type) {
     case 'hero':
@@ -467,40 +485,80 @@ function BlockSettings({ block, onChange }) {
 
     case 'carousel':
       return (
-        <Field label="Elementos del carrusel (Cover Flow 3D)">
-          <div className="space-y-2">
-            {(c.items || []).map((item, i) => (
-              <div key={i} className="flex items-center gap-2 border border-line p-2">
-                <span className="truncate text-xs">
-                  {item.type}: {item.url}
-                </span>
-                <button
-                  type="button"
-                  className="ml-auto text-brand"
-                  onClick={() => setContent({ items: (c.items || []).filter((_, idx) => idx !== i) })}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            <UploadButton
-              accept="image/*"
-              label="Agregar imagen"
-              onUploaded={(m) =>
-                setContent({ items: [...(c.items || []), { type: 'image', url: m.url }] })
-              }
-            />
-            <UploadButton
-              accept="video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm"
-              label="Agregar video"
-              onUploaded={(m) =>
-                setContent({
-                  items: [...(c.items || []), { type: 'video', url: m.url, poster: m.thumbnail_url }],
+        <>
+          <Field label="Código de recepción (URL sencilla)">
+            <input
+              className={inputClass()}
+              value={s.ingest_code || ''}
+              placeholder="ej: boda-ana"
+              onChange={(e) =>
+                setSettings({
+                  ingest_code: e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\-_]/g, '')
+                    .slice(0, 64),
                 })
               }
             />
-          </div>
-        </Field>
+            <p className="mt-1 text-xs text-muted">
+              Guarda el evento después de poner el código. El otro sistema hará POST a esta URL.
+            </p>
+          </Field>
+          {ingestUrl ? (
+            <Field label="URL para el otro sistema">
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate border border-line bg-surface px-2 py-2 text-xs">
+                  {ingestUrl}
+                </code>
+                <button
+                  type="button"
+                  onClick={copyIngestUrl}
+                  className="inline-flex items-center gap-1 border border-line px-2 py-2 text-xs hover:border-brand"
+                >
+                  <Copy size={12} />
+                  Copiar
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                Ejemplo: curl -F &quot;file=@foto.jpg&quot; {ingestUrl}
+              </p>
+            </Field>
+          ) : null}
+          <Field label="Elementos del carrusel (Cover Flow 3D)">
+            <div className="space-y-2">
+              {(c.items || []).map((item, i) => (
+                <div key={i} className="flex items-center gap-2 border border-line p-2">
+                  <span className="truncate text-xs">
+                    {item.type}: {item.url}
+                  </span>
+                  <button
+                    type="button"
+                    className="ml-auto text-brand"
+                    onClick={() => setContent({ items: (c.items || []).filter((_, idx) => idx !== i) })}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+              <UploadButton
+                accept="image/*"
+                label="Agregar imagen"
+                onUploaded={(m) =>
+                  setContent({ items: [...(c.items || []), { type: 'image', url: m.url }] })
+                }
+              />
+              <UploadButton
+                accept="video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm"
+                label="Agregar video"
+                onUploaded={(m) =>
+                  setContent({
+                    items: [...(c.items || []), { type: 'video', url: m.url, poster: m.thumbnail_url }],
+                  })
+                }
+              />
+            </div>
+          </Field>
+        </>
       )
 
     case 'two_columns':
