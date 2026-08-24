@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react'
 import { mediaUrl } from '../../services/api'
@@ -19,14 +19,12 @@ function median(nums) {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
-/** Ratio del set: mediana (si son casi iguales, queda el ratio real del lote). */
 function resolveAspect(ratios) {
   if (!ratios.length) return 3 / 4
   return median(ratios)
 }
 
 function layoutForAspect(aspect, viewportW) {
-  // Límites del escenario según orientación
   const isLandscape = aspect >= 1.15
   const isSquare = aspect >= 0.9 && aspect < 1.15
 
@@ -43,7 +41,6 @@ function layoutForAspect(aspect, viewportW) {
     maxW = Math.min(viewportW * 0.52, maxH * aspect)
   }
 
-  // Encajar en el viewport sin romper el ratio
   let cardW = maxW
   let cardH = cardW / aspect
   if (cardH > maxH) {
@@ -58,8 +55,11 @@ function layoutForAspect(aspect, viewportW) {
   return { cardW, cardH, stageH, stepX, rotateY, objectFit: 'cover' }
 }
 
+const MAX_DOTS = 7
+const SWIPE_THRESHOLD = 48
+
 /**
- * Cover Flow 3D que se adapta al tamaño/ratio de las fotos.
+ * Cover Flow 3D — swipe, contador compacto y sin desbordar en móvil.
  */
 export function CoverFlowCarousel({
   images = [],
@@ -84,7 +84,6 @@ export function CoverFlowCarousel({
           }
         })
         .filter((item) => item.src),
-    // srcKey captura cambios reales de media
     [srcKey],
   )
 
@@ -96,8 +95,11 @@ export function CoverFlowCarousel({
     typeof window !== 'undefined' ? window.innerWidth : 1024,
   )
 
+  const dragRef = useRef(null)
+  const suppressClickRef = useRef(false)
+
   useEffect(() => {
-    setActiveIndex(Math.min(Math.floor(items.length / 2), Math.max(0, items.length - 1)))
+    setActiveIndex((prev) => Math.min(prev, Math.max(0, items.length - 1)))
   }, [items.length])
 
   useEffect(() => {
@@ -109,8 +111,9 @@ export function CoverFlowCarousel({
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      const sample = items.slice(0, 12)
       const sizes = await Promise.all(
-        items.map((item) => {
+        sample.map((item) => {
           const url = mediaUrl(item.type === 'video' && item.poster ? item.poster : item.src)
           return loadSize(url)
         }),
@@ -128,34 +131,104 @@ export function CoverFlowCarousel({
 
   if (items.length < 1) return null
 
-  const toPrev = (e) => {
-    e?.stopPropagation?.()
-    setActiveIndex((prev) => Math.max(0, prev - 1))
+  const toPrev = () => setActiveIndex((prev) => Math.max(0, prev - 1))
+  const toNext = () => setActiveIndex((prev) => Math.min(items.length - 1, prev + 1))
+  const toSlide = (index) => setActiveIndex(index)
+
+  const onPointerDown = (e) => {
+    if (e.button != null && e.button !== 0) return
+    dragRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      pointerId: e.pointerId,
+    }
+    suppressClickRef.current = false
+    e.currentTarget.setPointerCapture?.(e.pointerId)
   }
 
-  const toNext = (e) => {
-    e?.stopPropagation?.()
-    setActiveIndex((prev) => Math.min(items.length - 1, prev + 1))
+  const onPointerMove = (e) => {
+    const start = dragRef.current
+    if (!start || start.pointerId !== e.pointerId) return
+    const dx = e.clientX - start.x
+    if (Math.abs(dx) > 12) suppressClickRef.current = true
   }
 
-  const toSlide = (e, index) => {
-    e?.stopPropagation?.()
-    setActiveIndex(index)
+  const onPointerUp = (e) => {
+    const start = dragRef.current
+    if (!start || start.pointerId !== e.pointerId) return
+    const dx = e.clientX - start.x
+    dragRef.current = null
+    e.currentTarget.releasePointerCapture?.(e.pointerId)
+
+    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+      suppressClickRef.current = true
+      if (dx < 0) toNext()
+      else toPrev()
+    }
   }
+
+  const handleCardClick = (e, i, isActive) => {
+    e.stopPropagation()
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+    if (isActive) onSelect?.(i)
+    else toSlide(i)
+  }
+
+  const useCounter = items.length > MAX_DOTS
+  const dotWindow = useMemo(() => {
+    if (!useCounter && items.length <= MAX_DOTS) {
+      return items.map((_, i) => i)
+    }
+    // Ventana pequeña centrada en el activo (por si algún día la usamos)
+    const half = Math.floor(MAX_DOTS / 2)
+    let start = Math.max(0, activeIndex - half)
+    let end = Math.min(items.length, start + MAX_DOTS)
+    start = Math.max(0, end - MAX_DOTS)
+    return Array.from({ length: end - start }, (_, k) => start + k)
+  }, [activeIndex, items.length, useCounter])
 
   return (
     <div
       className={`relative flex w-full select-none flex-col items-center justify-center ${className}`}
       style={{ perspective: '1400px' }}
+      tabIndex={0}
+      role="region"
+      aria-roledescription="carrusel"
+      aria-label={`Galería, foto ${activeIndex + 1} de ${items.length}`}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          toPrev()
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          toNext()
+        }
+        if (e.key === 'Enter' && onSelect) {
+          e.preventDefault()
+          onSelect(activeIndex)
+        }
+      }}
     >
       <div
-        className="relative flex w-full items-center justify-center overflow-visible [transform-style:preserve-3d]"
-        style={{ height: layout.stageH }}
+        className="relative flex w-full touch-pan-y items-center justify-center overflow-hidden [transform-style:preserve-3d]"
+        style={{ height: layout.stageH, touchAction: 'pan-y' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          dragRef.current = null
+        }}
       >
         {items.map((item, i) => {
           const isActive = activeIndex === i
           const offset = i - activeIndex
           const absOffset = Math.abs(offset)
+          if (absOffset > 3) return null
+
           const isPast = i < activeIndex
           const src = mediaUrl(item.src)
           const poster = item.poster ? mediaUrl(item.poster) : src
@@ -163,7 +236,7 @@ export function CoverFlowCarousel({
           return (
             <motion.div
               key={`${item.src}-${i}`}
-              className="absolute cursor-pointer"
+              className="absolute cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: offset * layout.stepX,
@@ -178,24 +251,22 @@ export function CoverFlowCarousel({
                 width: layout.cardW,
                 height: layout.cardH,
               }}
-              onClick={(e) => {
-                if (isActive) onSelect?.(i)
-                else toSlide(e, i)
-              }}
+              onClick={(e) => handleCardClick(e, i, isActive)}
             >
               {isMonochrome ? (
                 <div className="flex h-full w-full items-center justify-center rounded-2xl border border-line bg-surface text-2xl font-bold text-muted shadow-xl">
                   {i + 1}
                 </div>
               ) : (
-                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-surface shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/5">
+                <div className="pointer-events-none relative h-full w-full overflow-hidden rounded-2xl bg-surface shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/5">
                   <img
                     src={item.type === 'video' ? poster : src}
                     alt={item.title || `Foto ${i + 1}`}
                     referrerPolicy="no-referrer"
                     className="h-full w-full"
                     style={{ objectFit: layout.objectFit }}
-                    loading="lazy"
+                    loading={absOffset <= 1 ? 'eager' : 'lazy'}
+                    draggable={false}
                   />
                   {item.type === 'video' && (
                     <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
@@ -204,53 +275,74 @@ export function CoverFlowCarousel({
                   )}
                 </div>
               )}
-              {item.title ? (
-                <motion.p
-                  className="absolute -bottom-8 left-0 right-0 truncate text-center text-xs font-medium text-ink/70 sm:text-sm"
-                  animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : -6 }}
-                >
-                  {item.title}
-                </motion.p>
-              ) : null}
             </motion.div>
           )
         })}
       </div>
 
-      <div className="z-20 mt-4 flex items-center gap-3 sm:mt-6">
+      <div className="z-20 mt-4 flex w-full max-w-sm items-center justify-center gap-3 px-2 sm:mt-6">
         <button
           type="button"
-          onClick={toPrev}
+          onClick={(e) => {
+            e.stopPropagation()
+            toPrev()
+          }}
           disabled={activeIndex === 0}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
           aria-label="Anterior"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-1.5">
-          {items.map((_, i) => (
-            <button
-              type="button"
-              key={i}
-              onClick={(e) => toSlide(e, i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                activeIndex === i ? 'w-6 bg-brand' : 'w-1.5 bg-line hover:bg-muted'
-              }`}
-              aria-label={`Ir a ${i + 1}`}
-            />
-          ))}
-        </div>
+
+        {useCounter ? (
+          <div className="min-w-0 flex-1 text-center">
+            <p className="text-sm font-medium tabular-nums text-ink">
+              {activeIndex + 1}
+              <span className="text-muted"> / {items.length}</span>
+            </p>
+            <div className="mx-auto mt-2 h-1 max-w-[140px] overflow-hidden rounded-full bg-line">
+              <div
+                className="h-full rounded-full bg-brand transition-all duration-300"
+                style={{ width: `${((activeIndex + 1) / items.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden">
+            {dotWindow.map((i) => (
+              <button
+                type="button"
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toSlide(i)
+                }}
+                className={`h-1.5 shrink-0 rounded-full transition-all duration-300 ${
+                  activeIndex === i ? 'w-6 bg-brand' : 'w-1.5 bg-line hover:bg-muted'
+                }`}
+                aria-label={`Ir a ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={toNext}
+          onClick={(e) => {
+            e.stopPropagation()
+            toNext()
+          }}
           disabled={activeIndex === items.length - 1}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
           aria-label="Siguiente"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <p className="mt-3 text-center text-xs text-muted">Toca la foto central para verla en grande</p>
+
+      <p className="mt-3 px-4 text-center text-xs text-muted">
+        Desliza · toca la central para ver / descargar
+      </p>
     </div>
   )
 }

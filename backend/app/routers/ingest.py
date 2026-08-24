@@ -50,7 +50,7 @@ def ingest_info(code: str, db: Session = Depends(get_db)):
         "event_id": block.event_id,
         "block_id": block.id,
         "items_count": len(items),
-        "hint": "POST multipart con campo 'file' (puedes enviar varios).",
+        "hint": "POST multipart campo 'file' (fotos o videos: jpg, png, webp, mp4, mov, webm).",
     }
 
 

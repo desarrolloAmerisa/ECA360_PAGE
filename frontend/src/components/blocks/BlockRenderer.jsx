@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
-import Video from 'yet-another-react-lightbox/plugins/video'
 import 'yet-another-react-lightbox/styles.css'
 import { mediaUrl } from '../../services/api'
 import { youtubeId } from '../../lib/utils'
 import { AnimatedMedia } from '../amicro/MicroInteractions'
 import { CoverFlowCarousel } from '../amicro/CardLayouts'
+import MediaGalleryPicker from '../media/MediaGalleryPicker'
 
 function alignClass(align) {
   if (align === 'center') return 'text-center mx-auto'
@@ -237,19 +237,6 @@ function CarouselBlock({ content }) {
     )
   }
 
-  const slides = items.map((item) => {
-    if (item.type === 'video') {
-      return {
-        type: 'video',
-        width: 1280,
-        height: 720,
-        sources: [{ src: mediaUrl(item.url || item.src), type: 'video/mp4' }],
-        poster: item.poster ? mediaUrl(item.poster) : undefined,
-      }
-    }
-    return { src: mediaUrl(item.url || item.src) }
-  })
-
   return (
     <>
       <CoverFlowCarousel
@@ -266,12 +253,23 @@ function CarouselBlock({ content }) {
         }}
         className="py-2"
       />
-      <Lightbox
+      <div className="mt-2 flex justify-center">
+        <button
+          type="button"
+          onClick={() => {
+            setIndex(0)
+            setOpen(true)
+          }}
+          className="text-xs font-medium text-brand underline-offset-2 hover:underline"
+        >
+          Ver galería y descargar
+        </button>
+      </div>
+      <MediaGalleryPicker
         open={open}
-        close={() => setOpen(false)}
-        index={index}
-        slides={slides}
-        plugins={[Video]}
+        items={items}
+        initialIndex={index}
+        onClose={() => setOpen(false)}
       />
     </>
   )

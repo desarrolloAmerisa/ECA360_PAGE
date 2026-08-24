@@ -501,7 +501,8 @@ function BlockSettings({ block, onChange }) {
               }
             />
             <p className="mt-1 text-xs text-muted">
-              Guarda el evento después de poner el código. El otro sistema hará POST a esta URL.
+              Guarda el evento después de poner el código. El otro sistema hará POST (fotos o videos) a
+              esta URL.
             </p>
           </Field>
           {ingestUrl ? (
@@ -520,7 +521,7 @@ function BlockSettings({ block, onChange }) {
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted">
-                Ejemplo: curl -F &quot;file=@foto.jpg&quot; {ingestUrl}
+                Fotos o videos: curl -F &quot;file=@foto.jpg&quot; {ingestUrl}
               </p>
             </Field>
           ) : null}
