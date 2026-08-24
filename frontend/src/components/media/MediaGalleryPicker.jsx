@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Download, Play, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import JSZip from 'jszip'
 import { mediaUrl } from '../../services/api'
 
 function itemSrc(item) {
@@ -40,7 +39,7 @@ function triggerDownload(blob, name) {
 }
 
 /**
- * Galería tipo álbum: ver, seleccionar y descargar (zip si hay varias).
+ * Galería tipo álbum: ver, seleccionar y descargar una por una.
  */
 export default function MediaGalleryPicker({ open, items = [], initialIndex = 0, onClose }) {
   const list = useMemo(
@@ -104,22 +103,16 @@ export default function MediaGalleryPicker({ open, items = [], initialIndex = 0,
     }
     setBusy(true)
     try {
-      if (indexes.length === 1) {
-        await downloadOne(indexes[0])
-        toast.success('Descarga lista')
-        return
-      }
-      const zip = new JSZip()
+      let ok = 0
       for (const i of indexes) {
-        const item = list[i]
-        const blob = await fetchBlob(itemSrc(item))
-        zip.file(fileName(item, i), blob)
+        await downloadOne(i)
+        ok += 1
+        // Pausa corta para que el navegador no bloquee descargas múltiples
+        if (indexes.length > 1) await new Promise((r) => setTimeout(r, 350))
       }
-      const out = await zip.generateAsync({ type: 'blob' })
-      triggerDownload(out, `eca360-galeria-${indexes.length}.zip`)
-      toast.success(`${indexes.length} archivos en ZIP`)
+      toast.success(ok === 1 ? 'Descarga lista' : `${ok} archivos descargados`)
     } catch {
-      toast.error('No se pudo descargar. Prueba de uno en uno.')
+      toast.error('No se pudo descargar alguna. Revisa permisos del navegador.')
     } finally {
       setBusy(false)
     }
