@@ -253,19 +253,8 @@ function CarouselBlock({ content }) {
         }}
         className="py-2"
       />
-      <div className="mt-2 flex justify-center">
-        <button
-          type="button"
-          onClick={() => {
-            setIndex(0)
-            setOpen(true)
-          }}
-          className="text-xs font-medium text-brand underline-offset-2 hover:underline"
-        >
-          Ver galería y descargar
-        </button>
-      </div>
       <MediaGalleryPicker
+        key="carousel-gallery"
         open={open}
         items={items}
         initialIndex={index}

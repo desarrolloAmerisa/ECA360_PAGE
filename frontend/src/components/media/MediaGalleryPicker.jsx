@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Download, Play, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -41,7 +41,13 @@ function triggerDownload(blob, name) {
 /**
  * Galería tipo álbum: ver, seleccionar y descargar una por una.
  */
-export default function MediaGalleryPicker({ open, items = [], initialIndex = 0, onClose }) {
+export default function MediaGalleryPicker({
+  open,
+  items = [],
+  initialIndex = 0,
+  startInSelect = false,
+  onClose,
+}) {
   const list = useMemo(
     () => (items || []).filter((it) => it.url || it.src),
     [items],
@@ -50,28 +56,39 @@ export default function MediaGalleryPicker({ open, items = [], initialIndex = 0,
   const [selectMode, setSelectMode] = useState(false)
   const [preview, setPreview] = useState(initialIndex)
   const [busy, setBusy] = useState(false)
+  const swipeRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
     setPreview(Math.min(Math.max(0, initialIndex), Math.max(0, list.length - 1)))
     setSelected(new Set())
-    setSelectMode(false)
+    setSelectMode(Boolean(startInSelect))
     setBusy(false)
-  }, [open, initialIndex, list.length])
+  }, [open, initialIndex, list.length, startInSelect])
 
   useEffect(() => {
     if (!open) return undefined
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
+      if (e.key === 'Escape') {
+        if (selectMode) {
+          setSelectMode(false)
+          setSelected(new Set())
+        } else {
+          onClose?.()
+        }
+      }
+      if (selectMode) return
+      if (e.key === 'ArrowLeft') setPreview((p) => Math.max(0, p - 1))
+      if (e.key === 'ArrowRight') setPreview((p) => Math.min(list.length - 1, p + 1))
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
     }
-  }, [open, onClose])
+  }, [open, onClose, selectMode, list.length])
 
   if (!open || !list.length) return null
 
@@ -156,7 +173,22 @@ export default function MediaGalleryPicker({ open, items = [], initialIndex = 0,
 
         {/* Vista grande */}
         {!selectMode && current && (
-          <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
+          <div
+            className="relative flex min-h-0 flex-1 touch-pan-y items-center justify-center px-2"
+            onPointerDown={(e) => {
+              if (e.button != null && e.button !== 0) return
+              swipeRef.current = { x: e.clientX, id: e.pointerId }
+            }}
+            onPointerUp={(e) => {
+              const start = swipeRef.current
+              swipeRef.current = null
+              if (!start || start.id !== e.pointerId) return
+              const dx = e.clientX - start.x
+              if (Math.abs(dx) < 48) return
+              if (dx < 0) setPreview((p) => Math.min(list.length - 1, p + 1))
+              else setPreview((p) => Math.max(0, p - 1))
+            }}
+          >
             {current.type === 'video' ? (
               <video
                 key={itemSrc(current)}
@@ -177,19 +209,13 @@ export default function MediaGalleryPicker({ open, items = [], initialIndex = 0,
           </div>
         )}
 
-        {/* Grid de selección / miniaturas */}
+        {/* Grilla tipo Fotos de iPhone */}
         <div
-          className={`shrink-0 border-t border-white/10 bg-black/80 ${
-            selectMode ? 'flex-1 overflow-y-auto' : 'max-h-[28vh] overflow-x-auto'
+          className={`border-t border-white/10 bg-black ${
+            selectMode ? 'min-h-0 flex-1 overflow-y-auto' : 'max-h-[38vh] overflow-y-auto'
           }`}
         >
-          <div
-            className={
-              selectMode
-                ? 'grid grid-cols-3 gap-1 p-2 sm:grid-cols-4 md:grid-cols-5'
-                : 'flex gap-2 p-2'
-            }
-          >
+          <div className="grid grid-cols-3 gap-px bg-white/10 sm:grid-cols-4">
             {list.map((item, i) => {
               const isOn = selectMode ? selected.has(i) : preview === i
               return (
@@ -197,9 +223,9 @@ export default function MediaGalleryPicker({ open, items = [], initialIndex = 0,
                   key={`${itemSrc(item)}-${i}`}
                   type="button"
                   onClick={() => (selectMode ? toggle(i) : setPreview(i))}
-                  className={`relative overflow-hidden bg-neutral-800 ${
-                    selectMode ? 'aspect-square' : 'h-16 w-16 shrink-0 rounded-md sm:h-20 sm:w-20'
-                  } ${isOn ? 'ring-2 ring-brand' : 'ring-1 ring-white/10'}`}
+                  className={`relative aspect-square overflow-hidden bg-neutral-800 ${
+                    isOn && !selectMode ? 'ring-2 ring-inset ring-white' : ''
+                  }`}
                 >
                   <img
                     src={itemThumb(item)}

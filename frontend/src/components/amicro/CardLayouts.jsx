@@ -87,9 +87,7 @@ export function CoverFlowCarousel({
     [srcKey],
   )
 
-  const [activeIndex, setActiveIndex] = useState(() =>
-    Math.min(Math.floor(items.length / 2), Math.max(0, items.length - 1)),
-  )
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, items.length - 1))
   const [aspect, setAspect] = useState(3 / 4)
   const [viewportW, setViewportW] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024,
@@ -99,7 +97,7 @@ export function CoverFlowCarousel({
   const suppressClickRef = useRef(false)
 
   useEffect(() => {
-    setActiveIndex((prev) => Math.min(prev, Math.max(0, items.length - 1)))
+    setActiveIndex(Math.max(0, items.length - 1))
   }, [items.length])
 
   useEffect(() => {
