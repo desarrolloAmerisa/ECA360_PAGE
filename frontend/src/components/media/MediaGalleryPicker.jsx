@@ -125,7 +125,7 @@ export default function MediaGalleryPicker({
         await downloadOne(i)
         ok += 1
         // Pausa corta para que el navegador no bloquee descargas múltiples
-        if (indexes.length > 1) await new Promise((r) => setTimeout(r, 350))
+        if (indexes.length > 1) await new Promise((r) => setTimeout(r, 550))
       }
       toast.success(ok === 1 ? 'Descarga lista' : `${ok} archivos descargados`)
     } catch {

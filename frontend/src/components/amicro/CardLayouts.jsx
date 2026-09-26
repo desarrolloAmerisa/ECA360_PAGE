@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Images, Play } from 'lucide-react'
 import { mediaUrl } from '../../services/api'
 
 function loadSize(url) {
@@ -148,7 +148,7 @@ export function CoverFlowCarousel({
     const start = dragRef.current
     if (!start || start.pointerId !== e.pointerId) return
     const dx = e.clientX - start.x
-    if (Math.abs(dx) > 12) suppressClickRef.current = true
+    if (Math.abs(dx) >= SWIPE_THRESHOLD) suppressClickRef.current = true
   }
 
   const onPointerUp = (e) => {
@@ -338,8 +338,19 @@ export function CoverFlowCarousel({
         </button>
       </div>
 
-      <p className="mt-3 px-4 text-center text-xs text-muted">
-        Desliza · toca la central para ver / descargar
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect?.(activeIndex)
+        }}
+        className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+      >
+        <Images className="h-4 w-4" />
+        Ver galería
+      </button>
+      <p className="mt-2 px-4 text-center text-xs text-muted">
+        Desliza el carrusel o abre la galería para descargar
       </p>
     </div>
   )

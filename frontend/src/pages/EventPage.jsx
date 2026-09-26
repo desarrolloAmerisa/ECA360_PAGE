@@ -7,6 +7,7 @@ import { formatDate } from '../lib/utils'
 import BlockRenderer from '../components/blocks/BlockRenderer'
 import CommentsSection from '../components/comments/CommentsSection'
 import EventCard from '../components/events/EventCard'
+import HireEcaFab from '../components/HireEcaFab'
 
 export default function EventPage() {
   const { slug } = useParams()
@@ -81,7 +82,7 @@ export default function EventPage() {
   const hasHero = event.blocks?.some((b) => b.type === 'hero')
 
   return (
-    <article>
+    <article className="pb-28 sm:pb-24">
       <div className="mx-auto max-w-4xl px-4 pt-8 sm:px-6">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-brand">
           <ArrowLeft size={16} /> Todos los eventos
@@ -141,6 +142,7 @@ export default function EventPage() {
           </div>
         </section>
       )}
+      <HireEcaFab />
     </article>
   )
 }
